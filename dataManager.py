@@ -1,7 +1,7 @@
-
 from pathlib import Path
 import csv
 import pandas as pd
+import shutil
 
 input_docs = Path("input_docs")
 approved_docs = Path("approved_docs")
@@ -44,22 +44,24 @@ def validate_file(file_name, header, rows):
         valid, message = clean_row(invalid_rows)
         return valid, message
     
-    extract_team_and_month(file_name)
+    extract_team_month_year(file_name)
 
     return True, "File is valid."
     
     #add a cleaner method for missing columns(incase user used a different name for the column), invalid data types(incase user spelled out integer), or empty cells.
 
-def extract_team_and_month(file_name):
+def extract_team_month_year(file_name):
     parts = file_name.split("_")
-    if len(parts) >= 2:
+    if len(parts) >= 3:
         team = parts[0]
-        month = parts[1].split(".")[0]
+        month = parts[1]
+        year = parts[2].split(".")[0]
     else:
-        new_team, new_month = clean_file_name(file_name)
+        new_team, new_month, new_year = clean_file_name(file_name)
         team = new_team
         month = new_month
-    return team, month
+        year = new_year
+    return team, month, year
 
 #cleaners
 def clean_header(header, missing_columns):
@@ -97,11 +99,12 @@ def clean_row(invalid_rows):
 def clean_file_name(file_name):
     print(f"File {file_name} name does not match expected format:'TeamName_Month.ext'.")
     if input("Would you like to rename the file? (yes/no):").lower() != "yes":
-        return "Unknown Team", "Unknown Month"
+        return "Unknown Team", "Unknown Month", "Unknown Year"
     new_file_name = input("Please enter the new file name (format: 'TeamName_Month.ext'): ")
-    return extract_team_and_month(new_file_name)
+    return extract_team_month_year(new_file_name)
 
 def process_file(): 
+    results = {}
     for file_path in input_docs.glob("*"):
         if file_path.suffix.lower() in [".csv", ".txt"]:
             df = pd.read_csv(file_path, sep=None, engine="python")
@@ -114,4 +117,19 @@ def process_file():
         header = df.columns.tolist()
         rows = df.to_dict("records")
         valid, message = validate_file(file_path.name, header, rows)
+        results[file_path.name] = (valid, message)
         print(f"{file_path.name}: {message}")
+    return results
+
+def migrate_approved_files():
+    results = process_file()
+    approved_docs.mkdir(parents=True, exist_ok=True)
+    for source_file in input_docs.glob("*"):
+        if source_file.is_file() and results[source_file.name][0]: #check if file was processed and is valid
+            shutil.move(str(source_file), str(approved_docs))    
+            print(f"{source_file.name} moved to {approved_docs}.")
+        else:
+            print(f"{source_file.name} not moved due to validation failure or processing error.")
+
+    
+    
