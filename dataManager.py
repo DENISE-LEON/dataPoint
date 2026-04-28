@@ -6,6 +6,7 @@ import shutil
 input_docs = Path("input_docs")
 approved_docs = Path("approved_docs")
 output_docs = Path("output_docs")
+mismatch_reports = output_docs / Path("mismatch_reports")
 
 #doc validate + clean -> approved_docs
 
@@ -103,6 +104,7 @@ def clean_file_name(file_name):
     new_file_name = input("Please enter the new file name (format: 'TeamName_Month.ext'): ")
     return extract_team_month_year(new_file_name)
 
+#process + migrate
 def process_file(): 
     results = {}
     for file_path in input_docs.glob("*"):
@@ -128,8 +130,23 @@ def migrate_approved_files():
         if source_file.is_file() and results[source_file.name][0]: #check if file was processed and is valid
             shutil.move(str(source_file), str(approved_docs))    
             print(f"{source_file.name} moved to {approved_docs}.")
+            source_file.unlink() #delete individual files in dir
         else:
             print(f"{source_file.name} not moved due to validation failure or processing error.")
-
     
+
+#writer functions
+def monthly_mismatch_writer(df, team, month, year):
+    mismatch_reports.mkdir(parents=True, exist_ok=True)
+
+    output_file = mismatch_reports / f"{team}_{month}_{year}_mismatch_report.csv"
+    df.to_csv(output_file, index=False)
+    print(f"Monthly mismatch report saved to {output_file}.")  
+
+def yearly_mismatch_writer(df, team, year):
+    mismatch_reports.mkdir(parents=True, exist_ok=True)
+
+    output_file = mismatch_reports / f"{team}_{year}_mismatch_report.csv"
+    df.to_csv(output_file, index=False)
+    print(f"Yearly mismatch report saved to {output_file}.")
     
