@@ -8,7 +8,7 @@ class Rag:
     from langchain_community.vectorstores import Chroma
     from langchain.chains import RetrievalQA
  
- #ai key 
+ #api key 
     load_dotenv()
     api_key = os.getenv("OPENAI_API_KEY")
 
@@ -18,4 +18,5 @@ class Rag:
     ".txt": TextLoader,
     ".csv": CSVLoader
 }
+
 
