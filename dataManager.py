@@ -2,6 +2,7 @@ from pathlib import Path
 import csv
 import pandas as pd
 import shutil
+import os
 
 input_docs = Path("input_docs")
 approved_docs = Path("approved_docs")
@@ -130,23 +131,33 @@ def migrate_approved_files():
         if source_file.is_file() and results[source_file.name][0]: #check if file was processed and is valid
             shutil.move(str(source_file), str(approved_docs))    
             print(f"{source_file.name} moved to {approved_docs}.")
-            source_file.unlink() #delete individual files in dir
         else:
             print(f"{source_file.name} not moved due to validation failure or processing error.")
     
+#add helper method to load the data for reporting and analysis
+def load_data():
+    files = list(approved_docs.glob("*"))
+    if not files:
+        print("No approved files found. Please validate and clean your files first.")
+        return pd.DataFrame() #return empty dataframe if no approved files
+    return pd.concat([pd.read_csv(file) if file.suffix.lower() in [".csv", ".txt"] else pd.read_excel(file) for file in files], ignore_index=True)
+
 
 #writer functions
-def monthly_mismatch_writer(df, team, month, year):
+def gen_mismatch_report(groupBy):
     mismatch_reports.mkdir(parents=True, exist_ok=True)
+    
+    df = load_data()
+    if df.empty:
+        print("No data available to generate mismatch report.")
+        return
 
-    output_file = mismatch_reports / f"{team}_{month}_{year}_mismatch_report.csv"
-    df.to_csv(output_file, index=False)
-    print(f"Monthly mismatch report saved to {output_file}.")  
+    df['delta'] = df['Expected Records Deleted'] - df['Actual Records Deleted']
+    mismatches = df[df['delta']!=0]
 
-def yearly_mismatch_writer(df, team, year):
-    mismatch_reports.mkdir(parents=True, exist_ok=True)
-
-    output_file = mismatch_reports / f"{team}_{year}_mismatch_report.csv"
-    df.to_csv(output_file, index=False)
-    print(f"Yearly mismatch report saved to {output_file}.")
+    for group_value, group in mismatches.groupby(groupBy):
+        output_file = mismatch_reports/ f"mismatch_report_{group_value}.csv"
+        group.to_csv(output_file, index = False)
+    
+#notes
     
