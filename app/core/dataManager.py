@@ -2,7 +2,6 @@ from pathlib import Path
 import csv
 import pandas as pd
 import shutil
-import os
 
 input_docs = Path("input_docs")
 approved_docs = Path("approved_docs")
