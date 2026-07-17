@@ -1,5 +1,5 @@
 apscheduler
-dotenv
+python-dotenv
 fastapi
 langchain
 langchain_community
