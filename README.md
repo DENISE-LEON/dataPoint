@@ -2,7 +2,7 @@
 
 A production-style REST API built with **FastAPI** that automates data file validation, mismatch report generation, and scheduled reporting — designed to eliminate manual data review workflows.
 
-> Built independently as a proof-of-concept during a Data Analysis Internship at Morgan Stanley Wealth Management, after identifying a recurring data processing pain point through AI case study analysis.
+> Built independently as a proof-of-concept during a Data Analysis Internship at Morgan Stanley Wealth Management — an idea sparked by AI case study research and team-meeting conversations, built on my own initiative rather than as an assigned project.
 
 ***
 
